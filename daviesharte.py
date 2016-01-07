@@ -26,7 +26,7 @@ def daviesharte(n, H=0.5, L=1):
 
     fgn = np.random.normal(0.0, 1.0, n)
 
-    # If H = 0.5 then just generate a standard Brownian motion, otherwise proceed with the Cholesky method
+    # If H = 0.5 then just generate a standard Brownian motion, otherwise proceed with the Davies Harte method
     if H == 0.5:
         pass
     else:
