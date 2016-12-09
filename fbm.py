@@ -23,6 +23,7 @@ def fbm(n, H=0.5, L=1, method="daviesharte"):
     raises:
         TypeError: if the input n is nonnegative or non-integer
         ValueError: if the Hurst parameter is outside (0,1) or L is negative
+            of if the method is invalid.
     """
     if method in ('daviesharte', 'hosking', 'cholesky'):
         fbm_realization = eval(method)
