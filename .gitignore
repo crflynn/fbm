@@ -58,3 +58,6 @@ target/
 
 # venv
 .env
+
+# pycharm
+.idea/
