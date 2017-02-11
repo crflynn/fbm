@@ -25,11 +25,11 @@ def fbm(n, H=0.5, L=1, method="daviesharte"):
         ValueError: if the Hurst parameter is outside (0,1) or L is negative
             of if the method is invalid.
     """
-    if method in ('daviesharte', 'hosking', 'cholesky'):
-        fbm_realization = eval(method)
-    else:
+    if method not in ('daviesharte', 'hosking', 'cholesky'):
         raise ValueError('Method must be \'daviesharte\', \'hosking\' or \
                         \'cholesky\'')
+    else:
+        fbm_realization = eval(method)
 
     return fbm_realization(n, H, L)
 
