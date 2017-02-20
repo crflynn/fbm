@@ -6,10 +6,14 @@ The three methods are Hosking's method, the Cholesky method, and the Davies Hart
 Usage:
 
 ```python
-fbm_realization, fbm_increments, times = fbm(n, H=0.5, L=1, method='daviesharte')
+fbm, fgn, times = fbm(n, H=0.5, L=1, method='daviesharte')
 ```
 
-where `n` is the number of equispaced increments desired for a fBm with Hurst parameter `H` on the interval [0, `L`]. Method can be either 'hosking','cholesky', or 'daviesharte'.
+where `n` is the number of equispaced increments desired for a fBm with Hurst parameter `H` on the interval [0, `L`]. Method can be either 'hosking','cholesky', or 'daviesharte'. The function returns 
+
+* `fbm`, a list of values of a discretely sampled fbm,
+* `fgn`, a list of increments of the fbm (fractional Gaussian noise)
+* `times`, a list of time values corresponding to the `fbm` realization
 
 The Hosking and Cholesky methods are mathematically the same. The Cholesky script uses the Cholesky decomposition method from numpy's linear algebra library, while Hosking's method performs the same computations directly, which is slightly faster. For best performance use the Davies and Harte method, which is much faster than both other methods especially for larger increment quantities.
 
