@@ -13,9 +13,9 @@ where `n` is the number of equispaced increments desired for a fBm with Hurst pa
 
 * `fbmr`, a list of values of a discretely sampled fbm realization,
 * `fgnr`, a list of increments of the fbm realization (fractional Gaussian noise)
-* `times`, a list of time values corresponding to the `fbm` realization
+* `times`, a list of time values corresponding to the values of `fbmr`
 
-The Hosking and Cholesky methods are mathematically the same. The Cholesky script uses the Cholesky decomposition method from numpy's linear algebra library, while Hosking's method performs the same computations directly, which is slightly faster. For best performance use the Davies and Harte method, which is much faster than both other methods especially for larger increment quantities.
+The Hosking and Cholesky methods are mathematically the same. The Cholesky function uses the Cholesky decomposition method from numpy's linear algebra library, while Hosking's method performs the same computations directly, which is slightly faster. For best performance use the Davies and Harte method, which is much faster than both other methods especially for larger increment quantities.
 
 
 Hosking's method
