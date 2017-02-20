@@ -6,7 +6,7 @@ The three methods are Hosking's method, the Cholesky method, and the Davies Hart
 Usage:
 
 ```python
-fbm(n, H=0.5, L=1, method='daviesharte')
+fbm_realization, fbm_increments, times = fbm(n, H=0.5, L=1, method='daviesharte')
 ```
 
 where `n` is the number of equispaced increments desired for a fBm with Hurst parameter `H` on the interval [0, `L`]. Method can be either 'hosking','cholesky', or 'daviesharte'.
