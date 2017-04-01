@@ -19,17 +19,17 @@ The Hosking and Cholesky methods are mathematically the same. The Cholesky funct
 
 The Davies and Harte method can fail if the Hurst parameter `H` is close to 1 and there are a small amount of increments `n`. If this occurs, python will print a warning to the console and fallback to using Hosking's method to generate the realization. See the following for a more detailed explanation
 
-Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian processes in [0, 1] d." Journal of computational and graphical statistics 3, no. 4 (1994): 409-432.
+* Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian processes in [0, 1] d." Journal of computational and graphical statistics 3, no. 4 (1994): 409-432.
 
 
 Hosking's method
 
-Hosking, Jonathan RM. "Modeling persistence in hydrological time series using fractional differencing." Water resources research 20, no. 12 (1984): 1898-1908.
+* Hosking, Jonathan RM. "Modeling persistence in hydrological time series using fractional differencing." Water resources research 20, no. 12 (1984): 1898-1908.
 
 Cholesky method:
 
-Asmussen, Søren. Stochastic simulation with a view towards stochastic processes. University of Aarhus. Centre for Mathematical Physics and Stochastics (MaPhySto)[MPS], 1998.
+* Asmussen, Søren. Stochastic simulation with a view towards stochastic processes. University of Aarhus. Centre for Mathematical Physics and Stochastics (MaPhySto)[MPS], 1998.
 
 Davies Harte method:
 
-Davies, Robert B., and D. S. Harte. "Tests for Hurst effect." Biometrika 74, no. 1 (1987): 95-101.
+* Davies, Robert B., and D. S. Harte. "Tests for Hurst effect." Biometrika 74, no. 1 (1987): 95-101.
