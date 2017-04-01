@@ -17,6 +17,10 @@ where `n` is the number of equispaced increments desired for a fBm with Hurst pa
 
 The Hosking and Cholesky methods are mathematically the same. The Cholesky function uses the Cholesky decomposition method from numpy's linear algebra library, while Hosking's method performs the same computations directly, which is slightly faster. For best performance use the Davies and Harte method, which is much faster than both other methods especially for larger increment quantities.
 
+The Davies and Harte method can fail if the Hurst parameter `H` is close to 1 and there are a small amount of increments `n`. If this occurs, python will print a warning to the console and fallback to using Hosking's method to generate the realization. See the following for a more detailed explanation
+
+Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian processes in [0, 1] d." Journal of computational and graphical statistics 3, no. 4 (1994): 409-432.
+
 
 Hosking's method
 
