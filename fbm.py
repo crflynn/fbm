@@ -1,4 +1,5 @@
 import numpy as np
+from warnings import warn
 
 
 def fbm(n, H=0.5, L=1, method="daviesharte"):
@@ -25,11 +26,16 @@ def fbm(n, H=0.5, L=1, method="daviesharte"):
         ValueError: if the Hurst parameter is outside (0,1) or L is negative
             of if the method is invalid.
     """
-    if method not in ('daviesharte', 'hosking', 'cholesky'):
+    methods = {'daviesharte': daviesharte,
+               'cholesky': cholesky,
+               'hosking': hosking
+               }
+
+    try:
+        fbm_realization = methods[method]
+    except KeyError:
         raise ValueError('Method must be \'daviesharte\', \'hosking\' or \
-                        \'cholesky\'')
-    else:
-        fbm_realization = eval(method)
+                    \'cholesky\'')
 
     return fbm_realization(n, H, L)
 
@@ -95,6 +101,17 @@ def daviesharte(n, H=0.5, L=1):
         # Discard imaginary part (should all be zero in theory so imaginary
         # part will be very small)
         eigenvals = np.fft.fft(row).real
+
+        # If any of the eigenvalues are negative, then the circulant matrix
+        # is not positive definite, meaning we cannot use this method. This
+        # occurs for situations where n is low and H is close to 1.
+        # Fall back to using the Hosking method.
+        if np.any([ev < 0 for ev in eigenvals]):
+            warn('Combination of increments n and Hurst value H invalid '
+                 'for Davies-Harte method. Reverting to Hosking method. '
+                 'Increasing the increments or decreasing the Hurst value '
+                 'will resolve this.')
+            return hosking(n, H, L)
 
         # Generate second sequence of i.d.d. standard normals
         fgn2 = np.random.normal(0.0, 1.0, n)
