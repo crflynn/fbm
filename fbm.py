@@ -1,274 +1,207 @@
+import warnings
+
 import numpy as np
-from warnings import warn
 
 
-def fbm(n, H=0.5, L=1, method="daviesharte"):
+class FBM(object):
+    """The FBM class.
+
+    After instantiating with n = number of increments, hurst parameter, length
+    of realization (default = 1) and method of generation
+    (default daviesharte), call sample for fBm, sample_noise
+    for fGn, or times to get corresponding time values.
     """
-    returns fbm, fgn, times
+    methods = ('daviesharte', 'cholesky', 'hosking')
 
-    Creates a discretely sampled fractional Brownian motion (fbm) realization
-    with n increments, Hurst parameter H and length L. Returns a 1 x (n+1)
-    length array of values, since B(t=0) = 0, with the fractional Gaussian
-    noise realization as a 1 x n length array of values and a 1 x (n+1) array
-    of time values corresponding to the fbm realization. Uses one of three
-    exact methods of generating a fbm (default is daviesharte)
+    def __init__(self, n, hurst, length=1, method="daviesharte"):
+        """Instantiate the FBM."""
+        self.n = n
+        self.hurst = hurst
+        self.length = length
+        self.method = method
+        method_map = {'daviesharte': self._daviesharte,
+                      'cholesky': self._cholesky,
+                      'hosking': self._hosking
+                      }
+        self._fgn = method_map[self.method]
 
-    args:
-        n (int): The number of increments for the fbm.
-        H (float): Hurst parameter, between 0 and 1 exclusive.
-        L (float): The length of the realization, nonnegative.
-    returns:
-        fbm (list(float)): A fbm realization from t=0 to t=L of length n+1.
-        fgn (list(float)): The corresponding fgn realization of length n.
-        t (list(float)): A list of time values associated with the fbm.
-    raises:
-        TypeError: if the input n is nonnegative or non-integer
-        ValueError: if the Hurst parameter is outside (0,1) or L is negative
-            of if the method is invalid.
-    """
-    methods = {'daviesharte': daviesharte,
-               'cholesky': cholesky,
-               'hosking': hosking
-               }
+    @property
+    def n(self):
+        return self._n
 
-    try:
-        fbm_realization = methods[method]
-    except KeyError:
-        raise ValueError('Method must be \'daviesharte\', \'hosking\' or \
-                    \'cholesky\'')
+    @n.setter
+    def n(self, value):
+        if not isinstance(value, int) or value <= 0:
+            raise TypeError('Number of increments must be a positive integer')
+        self._n = value
 
-    return fbm_realization(n, H, L)
+    @property
+    def hurst(self):
+        return self._hurst
 
+    @hurst.setter
+    def hurst(self, value):
+        if not isinstance(value, float) or value <= 0 or value >= 1:
+            raise ValueError('Hurst parameter must be in interval (0, 1).')
+        self._hurst = value
 
-def autocovariance(H, k):
-    """
-    Autocovariance function for fractional Gaussian noise.
-    args:
-        H (float): Hurst parameter, between 0 and 1 exclusive.
-        k (float): Distance between increments.
-    returns:
-        (float): The autocovariance for a fgn for parameters H, k
+    @property
+    def length(self):
+        return self._length
 
-    """
-    return 0.5 * (abs(k - 1) ** (2 * H) - 2 * abs(k) ** (2 * H) +
-                  abs(k + 1) ** (2 * H))
+    @length.setter
+    def length(self, value):
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError('Length of fbm must be greater than 0.')
+        self._length = value
 
+    @property
+    def method(self):
+        return self._method
 
-def daviesharte(n, H=0.5, L=1):
-    """
-    Uses Davies and Harte method (exact method) from:
-    Davies, Robert B., and D. S. Harte. "Tests for Hurst effect." Biometrika
-    74, no. 1 (1987): 95-101.
+    @method.setter
+    def method(self, value):
+        if value not in self.methods:
+            raise ValueError('Method must be \'daviesharte\', \'hosking\' or \
+                             \'cholesky\'')
+        self._method = value
 
-    args:
-        n (int): The number of increments for the fbm.
-        H (float): Hurst parameter, between 0 and 1 exclusive.
-        L (float): The length of the realization, nonnegative.
-    returns:
-        fbm (list(float)): A fbm realization from t=0 to t=L of length n+1.
-        fgn (list(float)): The corresponding fgn realization of length n.
-        t (list(float)): A list of time values associated with the fbm.
-    raises:
-        TypeError: if the input n is nonnegative or non-integer
-        ValueError: if the Hurst parameter is outside (0,1) or L is negative
-    """
+    def sample(self):
+        """Sample the fractional Brownian motion."""
+        return np.insert(self.sample_noise().cumsum(), [0], 0)
 
-    # Input checking
-    if not isinstance(n, int) or n <= 0:
-        raise TypeError('Number of increments must be a positive integer')
-    if H <= 0 or H >= 1:
-        raise ValueError('Hurst parameter must be in interval (0, 1).')
-    if L <= 0:
-        raise ValueError('Length of fbm must be greater than 0.')
+    def sample_noise(self):
+        """Sample the fractional Gaussian noise."""
+        scale = (1.0 * self.length / self.n) ** self.hurst
+        gn = np.random.normal(0.0, 1.0, self.n)
 
-    # For scaling to interval [0, L]
-    increment = float(L) / n
-    scale = increment ** H
+        # If hurst == 1/2 then just return Gaussian noise
+        if self.hurst == 0.5:
+            return gn * scale
+        else:
+            fgn = self._fgn(gn)
 
-    fgn = np.random.normal(0.0, 1.0, n)
+        # Scale to interval [0, L]
+        return fgn * scale
 
-    # If H = 0.5 then just generate a standard Brownian motion, otherwise
-    # proceed with the Davies Harte method
-    if H == 0.5:
-        pass
-    else:
-        # Generate first row of circulant matrix
-        row_component = [autocovariance(H, i) for i in range(1, n)]
-        reverse_component = [row_component[-i] for i in range(1, n)]
-        row = [autocovariance(H, 0)] + row_component + [0] + reverse_component
+    def times(self):
+        """The times associated with the fbm/fgn samples."""
+        return np.linspace(0, self.length, self.n + 1)
 
-        # Get eigenvalues of circulant matrix
-        # Discard imaginary part (should all be zero in theory so imaginary
+    def _autocovariance(self, k):
+        """The autocovariance for fgn."""
+        return 0.5 * (abs(k - 1) ** (2 * self.hurst) -
+                      2 * abs(k) ** (2 * self.hurst) +
+                      abs(k + 1) ** (2 * self.hurst))
+
+    def _daviesharte(self, gn):
+        """Generate a fgn realization using Davies-Harte method.
+
+        Uses Davies and Harte method (exact method) from:
+        Davies, Robert B., and D. S. Harte. "Tests for Hurst effect."
+        Biometrika 74, no. 1 (1987): 95-101.
+
+        Can fail if n is small and hurst close to 1. Falls back to Hosking
+        method in that case. See:
+
+        Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian
+        processes in [0, 1] d." Journal of computational and graphical
+        statistics 3, no. 4 (1994): 409-432.
+        """
+        # Generate the first row of the circulant matrix
+        row_component = [self._autocovariance(i) for i in range(1, self.n)]
+        reverse_component = list(reversed(row_component))
+        row = [self._autocovariance(0)] + row_component + \
+              [0] + reverse_component
+
+        # Get the eigenvalues of the circulant matrix
+        # Discard the imaginary part (should all be zero in theory so imaginary
         # part will be very small)
         eigenvals = np.fft.fft(row).real
 
         # If any of the eigenvalues are negative, then the circulant matrix
         # is not positive definite, meaning we cannot use this method. This
         # occurs for situations where n is low and H is close to 1.
-        # Fall back to using the Hosking method.
+        # Fall back to using the Hosking method. See the following for a more
+        # detailed explanation:
+        #
+        # Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian
+        #     processes in [0, 1] d." Journal of computational and graphical
+        #     statistics 3, no. 4 (1994): 409-432.
         if np.any([ev < 0 for ev in eigenvals]):
-            warn('Combination of increments n and Hurst value H invalid '
-                 'for Davies-Harte method. Reverting to Hosking method. '
-                 'Increasing the increments or decreasing the Hurst value '
-                 'will resolve this.')
-            return hosking(n, H, L)
+            warnings.warn('Combination of increments n and Hurst value H '
+                'invalid for Davies-Harte method. Reverting to Hosking method.'
+                ' Increasing the increments or decreasing the Hurst value '
+                'will resolve this.')
+            return self._hosking(gn)
 
         # Generate second sequence of i.d.d. standard normals
-        fgn2 = np.random.normal(0.0, 1.0, n)
+        gn2 = np.random.normal(0.0, 1.0, self.n)
 
         # Resulting sequence from matrix multiplication of positive definite
         # sqrt(C) matrix with fgn sample can be simulated in this way.
-        w = np.zeros(2 * n, dtype=complex)
-        for i in range(2 * n):
+        w = np.zeros(2 * self.n, dtype=complex)
+        for i in range(2 * self.n):
             if i == 0:
-                w[i] = np.sqrt(eigenvals[i] / (2 * n)) * fgn[i]
-            elif i < n:
-                w[i] = np.sqrt(eigenvals[i] / (4 * n)) * \
-                    (fgn[i] + 1j * fgn2[i])
-            elif i == n:
-                w[i] = np.sqrt(eigenvals[i] / (2 * n)) * fgn2[0]
+                w[i] = np.sqrt(eigenvals[i] / (2 * self.n)) * gn[i]
+            elif i < self.n:
+                w[i] = np.sqrt(eigenvals[i] / (4 * self.n)) * \
+                    (gn[i] + 1j * gn2[i])
+            elif i == self.n:
+                w[i] = np.sqrt(eigenvals[i] / (2 * self.n)) * gn2[0]
             else:
-                w[i] = np.sqrt(eigenvals[i] / (4 * n)) * \
-                    (fgn[2 * n - i] - 1j * fgn2[2 * n - i])
+                w[i] = np.sqrt(eigenvals[i] / (4 * self.n)) * \
+                    (gn[2 * self.n - i] - 1j * gn2[2 * self.n - i])
 
         # Resulting z is fft of sequence w. Discard small imaginary part (z
         # should be real in theory).
         z = np.fft.fft(w)
-        fgn = z[:n].real
+        fgn = z[:self.n].real
+        return fgn
 
-    # Scale to interval [0, L]
-    fgn *= scale
+    def _cholesky(self, gn):
+        """Generate a fgn realization using the Cholesky method.
 
-    # Take cumulative sum, return fbm, fgn, timesteps
-    fbm = fgn.cumsum()
-    fbm = np.insert(fbm, [0], 0)
-    t = np.linspace(0, L, n + 1)
-
-    return fbm, fgn, t
-
-
-def cholesky(n, H=0.5, L=1):
-    """
-    Uses Cholesky decomposition method (exact method) from:
-    Asmussen, S. (1998). Stochastic simulation with a view towards stochastic
-    processes. University of Aarhus. Centre for Mathematical Physics and
-    Stochastics (MaPhySto)[MPS].
-
-    Hosking's method performs the same operations directly rather than taking
-    a Cholesky decomposition of the covariance matrix.
-
-    args:
-        n (int): The number of increments for the fbm.
-        H (float): Hurst parameter, between 0 and 1 exclusive.
-        L (float): The length of the realization, nonnegative.
-    returns:
-        fbm (list(float)): A fbm realization from t=0 to t=L of length n+1.
-        fgn (list(float)): The corresponding fgn realization of length n.
-        t (list(float)): A list of time values associated with the fbm.
-    raises:
-        TypeError: if the input n is nonnegative or non-integer
-        ValueError: if the Hurst parameter is outside (0,1) or L is negative
-    """
-
-    # Input checking
-    if not isinstance(n, int) or n <= 0:
-        raise TypeError('Number of increments must be a positive integer')
-    if H <= 0 or H >= 1:
-        raise ValueError('Hurst parameter must be in interval (0, 1).')
-    if L <= 0:
-        raise ValueError('Length of fbm must be greater than 0.')
-
-    # For scaling to interval [0, L]
-    increment = float(L) / n
-    scale = increment ** H
-
-    fgn = np.random.normal(0.0, 1.0, n)
-
-    # If H = 0.5 then just generate a standard Brownian motion, otherwise
-    # proceed with the Cholesky method
-    if H == 0.5:
-        pass
-    else:
+        Uses Cholesky decomposition method (exact method) from:
+        Asmussen, S. (1998). Stochastic simulation with a view towards
+        stochastic processes. University of Aarhus. Centre for Mathematical
+        Physics and Stochastics (MaPhySto)[MPS].
+        """
         # Generate covariance matrix
-        G = np.matrix(np.zeros([n, n]))
-        for i in range(n):
+        G = np.matrix(np.zeros([self.n, self.n]))
+        for i in range(self.n):
             for j in range(i + 1):
-                G[i, j] = autocovariance(H, i - j)
+                G[i, j] = self._autocovariance(i - j)
 
         # Cholesky decomposition
         C = np.linalg.cholesky(G)
 
         # Generate fgn
-        fgn = C * np.matrix(fgn).T
+        fgn = C * np.matrix(gn).T
         fgn = np.squeeze(np.asarray(fgn))
-
-    # Scale to interval [0, L]
-    fgn *= scale
-
-    # Take cumulative sum, return fbm, fgn, timesteps
-    fbm = fgn.cumsum()
-    fbm = np.insert(fbm, [0], 0)
-    t = np.linspace(0, L, n + 1)
-
-    return fbm, fgn, t
+        return fgn
 
 
-def hosking(n, H=0.5, L=1):
-    """
-    Method of generation is Hosking's method (exact method) from his paper:
-    Hosking, J. R. (1984). Modeling persistence in hydrological time series
-    using fractional differencing. Water resources research, 20(12),
-    1898-1908.
+    def _hosking(self, gn):
+        """Generate a fgn realization using Hosking's method
 
-    Hosking's method generates a fractional Gaussian noise (fgn) realization.
-    The cumulative sum of this realization gives a fbm.
-
-    args:
-        n (int): The number of increments for the fbm.
-        H (float): Hurst parameter, between 0 and 1 exclusive.
-        L (float): The length of the realization, nonnegative.
-    returns:
-        fbm (list(float)): A fbm realization from t=0 to t=L of length n+1.
-        fgn (list(float)): The corresponding fgn realization of length n.
-        t (list(float)): A list of time values associated with the fbm.
-    raises:
-        TypeError: if the input n is nonnegative or non-integer
-        ValueError: if the Hurst parameter is outside (0,1) or L is negative
-    """
-
-    # Input checking
-    if not isinstance(n, int) or n <= 0:
-        raise TypeError('Number of increments must be a positive integer')
-    if H <= 0 or H >= 1:
-        raise ValueError('Hurst parameter must be in interval (0, 1).')
-    if L <= 0:
-        raise ValueError('Length of fbm must be greater than 0.')
-
-    # For scaling to interval [0, L]
-    increment = float(L) / n
-    scale = increment ** H
-
-    gn = np.random.normal(0.0, 1.0, n)
-
-    # If H = 0.5 then just generate a standard Brownian motion, otherwise
-    # proceed with Hosking's method
-    if H == 0.5:
-        fgn = gn
-        del gn
-    else:
-        # Initializations
-        fgn = np.zeros(n)
-        phi = np.zeros(n)
-        psi = np.zeros(n)
-        cov = np.array([autocovariance(H, i) for i in range(n)])
+        Method of generation is Hosking's method (exact method) from his paper:
+        Hosking, J. R. (1984). Modeling persistence in hydrological time series
+        using fractional differencing. Water resources research, 20(12),
+        1898-1908.
+        """
+        fgn = np.zeros(self.n)
+        phi = np.zeros(self.n)
+        psi = np.zeros(self.n)
+        cov = np.array([self._autocovariance(i) for i in range(self.n)])
 
         # First increment from stationary distribution
         fgn[0] = gn[0]
         v = 1
         phi[0] = 0
 
-        # Generates fgn realization with n increments of size 1
-        for i in range(1, n):
+        # Generate fgn realization with n increments of size 1
+        for i in range(1, self.n):
             phi[i - 1] = cov[i]
             for j in range(i - 1):
                 psi[j] = phi[j]
@@ -281,12 +214,19 @@ def hosking(n, H=0.5, L=1):
                 fgn[i] += phi[j] * fgn[i - j - 1]
             fgn[i] += np.sqrt(v) * gn[i]
 
-    # Scale to interval [0, L]
-    fgn *= scale
+        return fgn
 
-    # Take cumulative sum, return fbm, fgn, timesteps
-    fbm = fgn.cumsum()
-    fbm = np.insert(fbm, [0], 0)
-    t = np.linspace(0, L, n + 1)
 
-    return fbm, fgn, t
+def fbm(n, hurst, length=1, method="daviesharte"):
+    """One off sample of fbm."""
+    f = FBM(n, hurst, length, method)
+    return f.sample()
+
+def fgn(n, hurst, length=1, method="daviesharte"):
+    """One off sample of fgn."""
+    f = FBM(n, hurst, length, method)
+    return f.sample_noise()
+
+def times(n, length=1):
+    """Generate the times associated with increments n and length."""
+    return np.linspace(0, length, n + 1)

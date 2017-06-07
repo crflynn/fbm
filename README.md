@@ -1,23 +1,45 @@
 # fbm
-Exact methods for simulating fractional Brownian motion (fBm) in python.
+Exact methods for simulating fractional Brownian motion (fBm) or fractional Gaussian noise (fGn) in python.
 
-The three methods are Hosking's method, the Cholesky method, and the Davies Harte method. All three methods are exact in generating a discretely sampled fbm using python.
+The three methods are Hosking's method, the Cholesky method, and the Davies Harte method. All three methods are exact in generating a discretely sampled fBm/fGn.
 
 Usage:
 
 ```python
-fbmr, fgnr, times = fbm(n, H=0.5, L=1, method='daviesharte')
+from fbm import FBM
+
+
+f = FBM(n=16, H=0.75, L=1, method='daviesharte')
+
+# Generate a fBm realization
+fbm_sample = f.sample()
+
+# Generate a fGn realization
+fgn_sample = f.sample_noise()
+
+# Get the times associated with the fBm
+times = f.times()
 ```
 
-where `n` is the number of equispaced increments desired for a fBm with Hurst parameter `H` on the interval [0, `L`]. Method can be either 'hosking','cholesky', or 'daviesharte'. The function returns 
+where `n` is the number of equispaced increments desired for a fBm with Hurst parameter `H` on the interval [0, `L`]. Method can be either `'hosking'`,`'cholesky'`, or `'daviesharte'`. The `sample` method returns a length `n+1` array of discrete values for the fBm (includes 0). The `sample_noise` method returns a length `n` array of fBm increments, or fGn. The `times` method returns a length `n+1` array of times corresponding to the fBm realizations.
 
-* `fbmr`, a list of values of a discretely sampled fbm realization,
-* `fgnr`, a list of increments of the fbm realization (fractional Gaussian noise)
-* `times`, a list of time values corresponding to the values of `fbmr`
+For simulating multiple realizations use the FBM class provided as above. For one-off samples of fBm or fGn there are also functions available which handle the FBM object themselves:
 
-The Hosking and Cholesky methods are mathematically the same. The Cholesky function uses the Cholesky decomposition method from numpy's linear algebra library, while Hosking's method performs the same computations directly, which is slightly faster. For best performance use the Davies and Harte method, which is much faster than both other methods especially for larger increment quantities.
+```python
+from fbm import fbm, fgn, times
 
-The Davies and Harte method can fail if the Hurst parameter `H` is close to 1 and there are a small amount of increments `n`. If this occurs, python will print a warning to the console and fallback to using Hosking's method to generate the realization. See page 412 of the following paper for a more detailed explanation
+
+# Generate a fBm realization
+fbm_sample = fbm(n=16, H=0.75, L=1, method='daviesharte')
+
+# Generate a fGn realization
+fgn_sample = fgn(n=16, H=0.75, L=1, method='daviesharte')
+
+# Get the times associated with the fBm
+times = times(n=16, L=1)
+```
+
+For fastest performance use the Davies and Harte method. It is much faster than both other methods especially for larger increment quantities. Note that the Davies and Harte method can fail if the Hurst parameter `H` is close to 1 and there are a small amount of increments `n`. If this occurs, python will print a warning to the console and fallback to using Hosking's method to generate the realization. See page 412 of the following paper for a more detailed explanation
 
 * Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian processes in [0, 1] d." Journal of computational and graphical statistics 3, no. 4 (1994): 409-432.
 
