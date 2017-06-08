@@ -16,7 +16,7 @@ setup(name='fbm',
       url='https://github.com/crflynn/fbm',
       py_modules=['fbm'],
       zip_safe=False,
-      install_requires=['numpy']
+      install_requires=['numpy'],
       classifiers=[
           'Development Status :: 4 - Beta',
           'License :: OSI Approved :: MIT License',
