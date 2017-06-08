@@ -1,3 +1,4 @@
+"""Generate realizations of fractional Brownian motion."""
 import warnings
 
 import numpy as np
