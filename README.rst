@@ -18,19 +18,19 @@ Usage:
     f = FBM(n=16, hurst=0.75, length=1, method='daviesharte')
 
     # Generate a fBm realization
-    fbm_sample = f.sample()
+    fbm_sample = f.fbm()
 
     # Generate a fGn realization
-    fgn_sample = f.sample_noise()
+    fgn_sample = f.fgn()
 
     # Get the times associated with the fBm
     times = f.times()
 
 where ``n`` is the number of equispaced increments desired for a fBm with Hurst
 parameter ``hurst`` on the interval [0, ``length``]. Method can be
-either ``'hosking'``, ``'cholesky'``, or ``'daviesharte'``. The ``sample()``
+either ``'hosking'``, ``'cholesky'``, or ``'daviesharte'``. The ``fbm()``
 method returns a length ``n+1`` array of discrete values for the fBm (includes
-0). The ``sample_noise()`` method returns a length ``n`` array of fBm
+0). The ``fgn()`` method returns a length ``n`` array of fBm
 increments, or fGn. The ``times()`` method returns a length ``n+1`` array of
 times corresponding to the fBm realizations.
 
