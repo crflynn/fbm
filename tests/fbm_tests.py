@@ -77,14 +77,14 @@ class FBMTests(TestCase):
     def fbm_class_compare(self, process, method):
         np.random.seed(self.seed)
         obj = self.cls_objects[method]
-        realization = obj.sample()
+        realization = obj.fbm()
         self.assertTrue(self.compare(realization,
                                      self.realizations[process][method]))
 
     def fgn_class_compare(self, process, method):
         np.random.seed(self.seed)
         obj = self.cls_objects[method]
-        realization = obj.sample_noise()
+        realization = obj.fgn()
         self.assertTrue(self.compare(realization,
                                      self.realizations[process][method]))
 

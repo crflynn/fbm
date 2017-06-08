@@ -9,8 +9,8 @@ class FBM(object):
 
     After instantiating with n = number of increments, hurst parameter, length
     of realization (default = 1) and method of generation
-    (default daviesharte), call sample for fBm, sample_noise
-    for fGn, or times to get corresponding time values.
+    (default daviesharte), call fbm() for fBm, fgn()
+    for fGn, or times() to get corresponding time values.
     """
     methods = ('daviesharte', 'cholesky', 'hosking')
 
@@ -67,11 +67,11 @@ class FBM(object):
                              \'cholesky\'')
         self._method = value
 
-    def sample(self):
+    def fbm(self):
         """Sample the fractional Brownian motion."""
-        return np.insert(self.sample_noise().cumsum(), [0], 0)
+        return np.insert(self.fgn().cumsum(), [0], 0)
 
-    def sample_noise(self):
+    def fgn(self):
         """Sample the fractional Gaussian noise."""
         scale = (1.0 * self.length / self.n) ** self.hurst
         gn = np.random.normal(0.0, 1.0, self.n)
@@ -221,12 +221,12 @@ class FBM(object):
 def fbm(n, hurst, length=1, method="daviesharte"):
     """One off sample of fbm."""
     f = FBM(n, hurst, length, method)
-    return f.sample()
+    return f.fbm()
 
 def fgn(n, hurst, length=1, method="daviesharte"):
     """One off sample of fgn."""
     f = FBM(n, hurst, length, method)
-    return f.sample_noise()
+    return f.fgn()
 
 def times(n, length=1):
     """Generate the times associated with increments n and length."""
