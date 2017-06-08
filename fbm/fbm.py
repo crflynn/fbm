@@ -25,6 +25,12 @@ class FBM(object):
                       'hosking': self._hosking
                       }
         self._fgn = method_map[self.method]
+        # Some reusable values to speed up Monte Carlo.
+        self._cov = None
+        self._eigenvals = None
+        self._C = None
+        # Flag if some params get changed
+        self._changed = False
 
     @property
     def n(self):
@@ -35,6 +41,7 @@ class FBM(object):
         if not isinstance(value, int) or value <= 0:
             raise TypeError('Number of increments must be a positive integer')
         self._n = value
+        self._changed = True
 
     @property
     def hurst(self):
@@ -45,6 +52,7 @@ class FBM(object):
         if not isinstance(value, float) or value <= 0 or value >= 1:
             raise ValueError('Hurst parameter must be in interval (0, 1).')
         self._hurst = value
+        self._changed = True
 
     @property
     def length(self):
@@ -55,6 +63,7 @@ class FBM(object):
         if not isinstance(value, (int, float)) or value <= 0:
             raise ValueError('Length of fbm must be greater than 0.')
         self._length = value
+        self._changed = True
 
     @property
     def method(self):
@@ -66,6 +75,7 @@ class FBM(object):
             raise ValueError('Method must be \'daviesharte\', \'hosking\' or \
                              \'cholesky\'')
         self._method = value
+        self._changed = True
 
     def fbm(self):
         """Sample the fractional Brownian motion."""
@@ -109,16 +119,19 @@ class FBM(object):
         processes in [0, 1] d." Journal of computational and graphical
         statistics 3, no. 4 (1994): 409-432.
         """
-        # Generate the first row of the circulant matrix
-        row_component = [self._autocovariance(i) for i in range(1, self.n)]
-        reverse_component = list(reversed(row_component))
-        row = [self._autocovariance(0)] + row_component + \
-              [0] + reverse_component
+        # Monte carlo consideration
+        if self._eigenvals is None or self._changed:
+            # Generate the first row of the circulant matrix
+            row_component = [self._autocovariance(i) for i in range(1, self.n)]
+            reverse_component = list(reversed(row_component))
+            row = [self._autocovariance(0)] + row_component + \
+                  [0] + reverse_component
 
-        # Get the eigenvalues of the circulant matrix
-        # Discard the imaginary part (should all be zero in theory so imaginary
-        # part will be very small)
-        eigenvals = np.fft.fft(row).real
+            # Get the eigenvalues of the circulant matrix
+            # Discard the imaginary part (should all be zero in theory so
+            # imaginary part will be very small)
+            self._eigenvals = np.fft.fft(row).real
+            self._changed = False
 
         # If any of the eigenvalues are negative, then the circulant matrix
         # is not positive definite, meaning we cannot use this method. This
@@ -129,7 +142,7 @@ class FBM(object):
         # Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian
         #     processes in [0, 1] d." Journal of computational and graphical
         #     statistics 3, no. 4 (1994): 409-432.
-        if np.any([ev < 0 for ev in eigenvals]):
+        if np.any([ev < 0 for ev in self._eigenvals]):
             warnings.warn('Combination of increments n and Hurst value H '
                 'invalid for Davies-Harte method. Reverting to Hosking method.'
                 ' Increasing the increments or decreasing the Hurst value '
@@ -144,14 +157,14 @@ class FBM(object):
         w = np.zeros(2 * self.n, dtype=complex)
         for i in range(2 * self.n):
             if i == 0:
-                w[i] = np.sqrt(eigenvals[i] / (2 * self.n)) * gn[i]
+                w[i] = np.sqrt(self._eigenvals[i] / (2 * self.n)) * gn[i]
             elif i < self.n:
-                w[i] = np.sqrt(eigenvals[i] / (4 * self.n)) * \
+                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * \
                     (gn[i] + 1j * gn2[i])
             elif i == self.n:
-                w[i] = np.sqrt(eigenvals[i] / (2 * self.n)) * gn2[0]
+                w[i] = np.sqrt(self._eigenvals[i] / (2 * self.n)) * gn2[0]
             else:
-                w[i] = np.sqrt(eigenvals[i] / (4 * self.n)) * \
+                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * \
                     (gn[2 * self.n - i] - 1j * gn2[2 * self.n - i])
 
         # Resulting z is fft of sequence w. Discard small imaginary part (z
@@ -168,17 +181,20 @@ class FBM(object):
         stochastic processes. University of Aarhus. Centre for Mathematical
         Physics and Stochastics (MaPhySto)[MPS].
         """
-        # Generate covariance matrix
-        G = np.matrix(np.zeros([self.n, self.n]))
-        for i in range(self.n):
-            for j in range(i + 1):
-                G[i, j] = self._autocovariance(i - j)
+        # Monte carlo consideration
+        if self._C is None or self._changed:
+            # Generate covariance matrix
+            G = np.matrix(np.zeros([self.n, self.n]))
+            for i in range(self.n):
+                for j in range(i + 1):
+                    G[i, j] = self._autocovariance(i - j)
 
-        # Cholesky decomposition
-        C = np.linalg.cholesky(G)
+            # Cholesky decomposition
+            self._C = np.linalg.cholesky(G)
+            self._changed = False
 
         # Generate fgn
-        fgn = C * np.matrix(gn).T
+        fgn = self._C * np.matrix(gn).T
         fgn = np.squeeze(np.asarray(fgn))
         return fgn
 
@@ -194,7 +210,11 @@ class FBM(object):
         fgn = np.zeros(self.n)
         phi = np.zeros(self.n)
         psi = np.zeros(self.n)
-        cov = np.array([self._autocovariance(i) for i in range(self.n)])
+        # Monte carlo consideration
+        if self._cov is None or self.changed:
+            self._cov = np.array(
+                [self._autocovariance(i) for i in range(self.n)])
+            self._changed = False
 
         # First increment from stationary distribution
         fgn[0] = gn[0]
@@ -203,10 +223,10 @@ class FBM(object):
 
         # Generate fgn realization with n increments of size 1
         for i in range(1, self.n):
-            phi[i - 1] = cov[i]
+            phi[i - 1] = self._cov[i]
             for j in range(i - 1):
                 psi[j] = phi[j]
-                phi[i - 1] -= psi[j] * cov[i - j - 1]
+                phi[i - 1] -= psi[j] * self._cov[i - j - 1]
             phi[i - 1] /= v
             for j in range(i - 1):
                 phi[j] = psi[j] - phi[i - 1] * psi[i - j - 2]
