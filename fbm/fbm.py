@@ -22,8 +22,7 @@ class FBM(object):
         self.method = method
         method_map = {'daviesharte': self._daviesharte,
                       'cholesky': self._cholesky,
-                      'hosking': self._hosking
-                      }
+                      'hosking': self._hosking}
         self._fgn = method_map[self.method]
         # Some reusable values to speed up Monte Carlo.
         self._cov = None
@@ -211,7 +210,7 @@ class FBM(object):
         phi = np.zeros(self.n)
         psi = np.zeros(self.n)
         # Monte carlo consideration
-        if self._cov is None or self.changed:
+        if self._cov is None or self._changed:
             self._cov = np.array(
                 [self._autocovariance(i) for i in range(self.n)])
             self._changed = False
