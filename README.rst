@@ -30,7 +30,7 @@ Usage:
     fgn_sample = f.fgn()
 
     # Get the times associated with the fBm
-    times = f.times()
+    t_values = f.times()
 
 where ``n`` is the number of equispaced increments desired for a fBm with Hurst
 parameter ``hurst`` on the interval [0, ``length``]. Method can be
@@ -56,7 +56,7 @@ handle the FBM object themselves:
     fgn_sample = fgn(n=16, hurst=0.75, length=1, method='daviesharte')
 
     # Get the times associated with the fBm
-    times = times(n=16, length=1)
+    t_values = times(n=16, length=1)
 
 For fastest performance use the Davies and Harte method. It is much faster than
 both other methods especially for larger increment quantities. Note that the
