@@ -9,3 +9,9 @@
 
 # Python virtualenv .env file
 .env
+
+# tox testing
+.tox/
+
+# packaging
+MANIFEST
