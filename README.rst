@@ -8,6 +8,12 @@ The three methods are Hosking's method, the Cholesky method, and the Davies
 Harte method. All three methods are exact in generating a discretely sampled
 fBm/fGn.
 
+Installation:
+
+.. code-block::
+
+    pip install fbm
+
 Usage:
 
 .. code-block:: python
