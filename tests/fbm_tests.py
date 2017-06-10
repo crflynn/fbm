@@ -109,3 +109,10 @@ class FBMTests(TestCase):
     def fbm_class_times_test(self):
         obj = self.cls_objects['daviesharte']
         self.assertTrue((obj.times() == self.t).all())
+
+    def daviesharte_to_hosking_fallback_test(self):
+        # Low n, high hurst
+        f = FBM(5, 0.99, 1, method='daviesharte')
+        with self.assertWarns(Warning):
+            s = f.fbm()
+        self.assertEqual('hosking', f.method)

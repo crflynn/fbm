@@ -12,24 +12,33 @@ class FBM(object):
     (default daviesharte), call fbm() for fBm, fgn()
     for fGn, or times() to get corresponding time values.
     """
-    methods = ('daviesharte', 'cholesky', 'hosking')
 
     def __init__(self, n, hurst, length=1, method="daviesharte"):
         """Instantiate the FBM."""
+        self._methods = {'daviesharte': self._daviesharte,
+                         'cholesky': self._cholesky,
+                         'hosking': self._hosking}
         self.n = n
         self.hurst = hurst
         self.length = length
         self.method = method
-        method_map = {'daviesharte': self._daviesharte,
-                      'cholesky': self._cholesky,
-                      'hosking': self._hosking}
-        self._fgn = method_map[self.method]
+        self._fgn = self._methods[self.method]
         # Some reusable values to speed up Monte Carlo.
         self._cov = None
         self._eigenvals = None
         self._C = None
         # Flag if some params get changed
         self._changed = False
+
+    def __str__(self):
+        return 'fBm (' + str(self.method) + ') on [0, ' + str(self.length) + \
+            '] with Hurst value ' + str(self.hurst) + ' and ' + str(self.n) + \
+            ' increments'
+
+    def __repr__(self):
+        return 'FBM(n=' + str(self.n) + ', hurst=' + str(self.hurst) + \
+            ', length=' + str(self.length) + ', method=\'' + \
+            str(self.method) + '\')'
 
     @property
     def n(self):
@@ -38,7 +47,7 @@ class FBM(object):
     @n.setter
     def n(self, value):
         if not isinstance(value, int) or value <= 0:
-            raise TypeError('Number of increments must be a positive integer')
+            raise TypeError('Number of increments must be a positive int.')
         self._n = value
         self._changed = True
 
@@ -70,10 +79,11 @@ class FBM(object):
 
     @method.setter
     def method(self, value):
-        if value not in self.methods:
+        if value not in self._methods:
             raise ValueError('Method must be \'daviesharte\', \'hosking\' or \
                              \'cholesky\'')
         self._method = value
+        self._fgn = self._methods[self.method]
         self._changed = True
 
     def fbm(self):
@@ -144,11 +154,14 @@ class FBM(object):
         if np.any([ev < 0 for ev in self._eigenvals]):
             warnings.warn('Combination of increments n and Hurst value H '
                 'invalid for Davies-Harte method. Reverting to Hosking method.'
-                ' Increasing the increments or decreasing the Hurst value '
-                'will resolve this.')
+                ' Occurs when n is small and Hurst is close to 1. ')
+            # Set method to hosking for future samples.
+            self.method = 'hosking'
+            # Don't need to store eigenvals anymore.
+            self._eigenvals = None
             return self._hosking(gn)
 
-        # Generate second sequence of i.d.d. standard normals
+        # Generate second sequence of i.i.d. standard normals
         gn2 = np.random.normal(0.0, 1.0, self.n)
 
         # Resulting sequence from matrix multiplication of positive definite
