@@ -8,7 +8,7 @@ def readme():
         return f.read()
 
 setup(name='fbm',
-      version='0.1.0',
+      version='0.1.1',
       description='Fractional Brownian Motion',
       long_description=readme(),
       license='MIT',
