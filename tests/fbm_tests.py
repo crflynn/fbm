@@ -1,4 +1,5 @@
 from unittest import TestCase
+import warnings
 
 import numpy as np
 
@@ -113,6 +114,11 @@ class FBMTests(TestCase):
     def daviesharte_to_hosking_fallback_test(self):
         # Low n, high hurst
         f = FBM(5, 0.99, 1, method='daviesharte')
-        with self.assertWarns(Warning):
+        # This only works on py3
+        # with self.assertWarns(Warning):
+        #     s = f.fbm()
+        with warnings.catch_warnings(record=True) as w:
             s = f.fbm()
+            self.assertEqual(len(w), 1)
+            self.assertIn('invalid for Davies-Harte', str(w[-1].message))
         self.assertEqual('hosking', f.method)
