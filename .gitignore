@@ -13,6 +13,14 @@
 # tox testing
 .tox/
 
+# coverage
+.pytest_cache
+_cov
+.coverage
+
 # packaging
 MANIFEST
 build/
+
+# macosx
+.DS_Store

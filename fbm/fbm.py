@@ -15,9 +15,9 @@ class FBM(object):
 
     def __init__(self, n, hurst, length=1, method="daviesharte"):
         """Instantiate the FBM."""
-        self._methods = {'daviesharte': self._daviesharte,
-                         'cholesky': self._cholesky,
-                         'hosking': self._hosking}
+        self._methods = {"daviesharte": self._daviesharte,
+                         "cholesky": self._cholesky,
+                         "hosking": self._hosking}
         self.n = n
         self.hurst = hurst
         self.length = length
@@ -31,57 +31,63 @@ class FBM(object):
         self._changed = False
 
     def __str__(self):
-        return 'fBm (' + str(self.method) + ') on [0, ' + str(self.length) + \
-            '] with Hurst value ' + str(self.hurst) + ' and ' + str(self.n) + \
-            ' increments'
+        """Str method."""
+        return "fBm (" + str(self.method) + ") on [0, " + str(self.length) + \
+            "] with Hurst value " + str(self.hurst) + " and " + \
+            str(self.n) + " increments"
 
     def __repr__(self):
-        return 'FBM(n=' + str(self.n) + ', hurst=' + str(self.hurst) + \
-            ', length=' + str(self.length) + ', method=\'' + \
-            str(self.method) + '\')'
+        """Repr method."""
+        return "FBM(n=" + str(self.n) + ", hurst=" + str(self.hurst) + \
+            ", length=" + str(self.length) + ", method=\"" + \
+            str(self.method) + "\")"
 
     @property
     def n(self):
+        """Get the number of increments."""
         return self._n
 
     @n.setter
     def n(self, value):
         if not isinstance(value, int) or value <= 0:
-            raise TypeError('Number of increments must be a positive int.')
+            raise TypeError("Number of increments must be a positive int.")
         self._n = value
         self._changed = True
 
     @property
     def hurst(self):
+        """Hurst parameter."""
         return self._hurst
 
     @hurst.setter
     def hurst(self, value):
         if not isinstance(value, float) or value <= 0 or value >= 1:
-            raise ValueError('Hurst parameter must be in interval (0, 1).')
+            raise ValueError("Hurst parameter must be in interval (0, 1).")
         self._hurst = value
         self._changed = True
 
     @property
     def length(self):
+        """Get the length of process."""
         return self._length
 
     @length.setter
     def length(self, value):
         if not isinstance(value, (int, float)) or value <= 0:
-            raise ValueError('Length of fbm must be greater than 0.')
+            raise ValueError("Length of fbm must be greater than 0.")
         self._length = value
         self._changed = True
 
     @property
     def method(self):
+        """Get the algorithm used to generate."""
         return self._method
 
     @method.setter
     def method(self, value):
         if value not in self._methods:
-            raise ValueError('Method must be \'daviesharte\', \'hosking\' or \
-                             \'cholesky\'')
+            raise ValueError("Method must be 'daviesharte', 'hosking' or \
+                             'cholesky'.")
         self._method = value
         self._fgn = self._methods[self.method]
         self._changed = True
@@ -105,11 +111,11 @@ class FBM(object):
         return fgn * scale
 
     def times(self):
-        """The times associated with the fbm/fgn samples."""
+        """Get times associated with the fbm/fgn samples."""
         return np.linspace(0, self.length, self.n + 1)
 
     def _autocovariance(self, k):
-        """The autocovariance for fgn."""
+        """Autocovariance for fgn."""
         return 0.5 * (abs(k - 1) ** (2 * self.hurst) -
                       2 * abs(k) ** (2 * self.hurst) +
                       abs(k + 1) ** (2 * self.hurst))
@@ -152,12 +158,13 @@ class FBM(object):
         #     processes in [0, 1] d." Journal of computational and graphical
         #     statistics 3, no. 4 (1994): 409-432.
         if np.any([ev < 0 for ev in self._eigenvals]):
-            warnings.warn('Combination of increments n and Hurst value H '
-                'invalid for Davies-Harte method. Reverting to Hosking method.'
-                ' Occurs when n is small and Hurst is close to 1. ')
+            warnings.warn(
+                "Combination of increments n and Hurst value H "
+                "invalid for Davies-Harte method. Reverting to Hosking method."
+                " Occurs when n is small and Hurst is close to 1. ")
             # Set method to hosking for future samples.
-            self.method = 'hosking'
-            # Don't need to store eigenvals anymore.
+            self.method = "hosking"
+            # Don"t need to store eigenvals anymore.
             self._eigenvals = None
             return self._hosking(gn)
 
@@ -210,9 +217,8 @@ class FBM(object):
         fgn = np.squeeze(np.asarray(fgn))
         return fgn
 
-
     def _hosking(self, gn):
-        """Generate a fgn realization using Hosking's method
+        """Generate a fGn realization using Hosking's method.
 
         Method of generation is Hosking's method (exact method) from his paper:
         Hosking, J. R. (1984). Modeling persistence in hydrological time series
@@ -251,14 +257,16 @@ class FBM(object):
 
 
 def fbm(n, hurst, length=1, method="daviesharte"):
-    """One off sample of fbm."""
+    """One off sample of fBm."""
     f = FBM(n, hurst, length, method)
     return f.fbm()
 
+
 def fgn(n, hurst, length=1, method="daviesharte"):
-    """One off sample of fgn."""
+    """One off sample of fGn."""
     f = FBM(n, hurst, length, method)
     return f.fgn()
+
 
 def times(n, length=1):
     """Generate the times associated with increments n and length."""

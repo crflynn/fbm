@@ -1,18 +1,26 @@
 fbm
 ===
 
-Exact methods for simulating fractional Brownian motion (fBm) or fractional
-Gaussian noise (fGn) in python.
+* Exact methods for simulating fractional Brownian motion (fBm) or fractional
+  Gaussian noise (fGn) in python.
+* *Approximate* simulation of multifractional Brownian motion (mBm) or
+  multifractional Gaussian noise (mGn).
 
-The three methods are Hosking's method, the Cholesky method, and the Davies
-Harte method. All three methods are exact in generating a discretely sampled
-fBm/fGn.
+Installation
+------------
 
-Installation:
+The fbm package is available on PyPI and can be installed via pip:
 
 .. code-block::
 
     pip install fbm
+
+fractional Brownian motion
+--------------------------
+
+Fractional Brownian motion can be generated via either Hosking's method, the
+Cholesky method, or the Davies-Harte method. All three methods are
+theoretically exact in generating a discretely sampled fBm/fGn.
 
 Usage:
 
@@ -21,7 +29,9 @@ Usage:
     from fbm import FBM
 
 
-    f = FBM(n=16, hurst=0.75, length=1, method='daviesharte')
+    f = FBM(n=1024, hurst=0.75, length=1, method='daviesharte')
+    # or
+    f = FBM(1024, 0.75)
 
     # Generate a fBm realization
     fbm_sample = f.fbm()
@@ -40,9 +50,13 @@ method returns a length ``n+1`` array of discrete values for the fBm (includes
 increments, or fGn. The ``times()`` method returns a length ``n+1`` array of
 times corresponding to the fBm realizations.
 
-For simulating multiple realizations use the FBM class provided as above.
-For one-off samples of fBm or fGn there are also functions available which
-handle the FBM object themselves:
+The ``n`` and ``hurst`` parameters are required. The ``length`` parameter
+defaults to 1 and ``method`` defaults to ``'daviesharte'``.
+
+For simulating multiple realizations use the FBM class provided as above. Some
+intermediate values are cached for repeated simulation.
+
+For one-off samples of fBm or fGn there are separate functions available:
 
 .. code-block:: python
 
@@ -50,19 +64,18 @@ handle the FBM object themselves:
 
 
     # Generate a fBm realization
-    fbm_sample = fbm(n=16, hurst=0.75, length=1, method='daviesharte')
+    fbm_sample = fbm(n=1024, hurst=0.75, length=1, method='daviesharte')
 
     # Generate a fGn realization
-    fgn_sample = fgn(n=16, hurst=0.75, length=1, method='daviesharte')
+    fgn_sample = fgn(n=1024, hurst=0.75, length=1, method='daviesharte')
 
     # Get the times associated with the fBm
-    t_values = times(n=16, length=1)
+    t_values = times(n=1024, length=1)
 
-For fastest performance use the Davies and Harte method. It is much faster than
-both other methods especially for larger increment quantities. Note that the
+For fastest performance use the Davies and Harte method. Note that the
 Davies and Harte method can fail if the Hurst parameter ``hurst`` is close to
-1 and there are a small amount of increments ``n``. If this occurs, python will
-print a warning to the console and fallback to using Hosking's method to
+1 and there are a small amount of increments ``n``. If this occurs, a warning
+is printed to the console and it will fallback to using Hosking's method to
 generate the realization. See page 412 of the following paper for a more
 detailed explanation:
 
@@ -87,3 +100,72 @@ detailed explanation:
 
 * Davies, Robert B., and D. S. Harte. "Tests for Hurst effect." Biometrika 74,
   no. 1 (1987): 95-101.
+
+
+multifractional Brownian motion
+-------------------------------
+
+This package supports *approximate* generation of multifractional
+Brownian motion. The current method uses the Riemann–Liouville fractional
+integral representation of mBm.
+
+Usage:
+
+.. code-block:: python
+
+    import math
+    from fbm import MBM
+
+
+    # Example Hurst function with respect to time.
+    def h(t):
+        return 0.25 * math.sin(20*t) + 0.5
+
+    m = MBM(n=1024, hurst=h, length=1, method='riemannliouville')
+    # or
+    m = MBM(1024, h)
+
+    # Generate a mBm realization
+    mbm_sample = m.mbm()
+
+    # Generate a mGn realization
+    mgn_sample = m.mgn()
+
+    # Get the times associated with the mBm
+    t_values = m.times()
+
+
+For one-off samples of mBm or mGn there are separate functions available:
+
+.. code-block:: python
+
+    from fbm import mbm, mgn, times
+
+
+    # Define a hurst function
+    def h(t):
+        return 0.75 - 0.5 * t
+
+    # Generate a mbm realization
+    mbm_sample = mbm(n=1024, hurst=h, length=1, method='riemannliouville')
+
+    # Generate a fGn realization
+    mgn_sample = mgn(n=1024, hurst=h, length=1, method='riemannliouville')
+
+    # Get the times associated with the mBm
+    t_values = times(n=1024, length=1)
+
+
+**Riemann-Liouville representation method:**
+
+*Approximate* method originally proposed for fBm in
+
+* Rambaldi, Sandro, and Ombretta Pinazza. "An accurate fractional Brownian
+  motion generator." Physica A: Statistical Mechanics and its Applications 208,
+  no. 1 (1994): 21-30.
+
+Adapted to approximate mBm in
+
+* Muniandy, S. V., and S. C. Lim. "Modeling of locally self-similar processes
+  using multifractional Brownian motion of Riemann-Liouville type." Physical
+  Review E 63, no. 4 (2001): 046104.
