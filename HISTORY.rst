@@ -1,4 +1,4 @@
-0.2.0: 2018-XX-XX
+0.2.0: 2018-02-27
 ~~~~~~~~~~~~~~~~~
 
 * Added multifractional Brownian motion class (MBM).
