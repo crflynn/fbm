@@ -1,3 +1,15 @@
+0.2.0: 2018-XX-XX
+~~~~~~~~~~~~~~~~~
+
+* Added multifractional Brownian motion class (MBM).
+
+* Added ``__version__`` and other metadata at module level.
+
+* Start using pipenv for dependency management.
+
+* Changed testing framework to pytest.
+
+
 0.1.1: 2017-06-10
 ~~~~~~~~~~~~~~~~~
 
