@@ -135,6 +135,9 @@ Usage:
     t_values = m.times()
 
 
+The ``hurst`` argument here should be a callable that accepts one argument
+and returns a float in (0, 1).
+
 For one-off samples of mBm or mGn there are separate functions available:
 
 .. code-block:: python
