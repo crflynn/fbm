@@ -1,6 +1,20 @@
 fbm
 ===
 
+|travis| |codecov| |pypi| |pyversions|
+
+.. |travis| image:: https://img.shields.io/travis/crflynn/fbm.svg
+    :target: https://travis-ci.org/crflynn/fbm
+
+.. |codecov| image:: https://codecov.io/gh/crflynn/fbm/branch/master/graphs/badge.svg
+    :target: https://codecov.io/gh/crflynn/fbm
+
+.. |pypi| image:: https://img.shields.io/pypi/v/fbm.svg
+    :target: https://pypi.python.org/pypi/fbm
+
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/fbm.svg
+    :target: https://pypi.python.org/pypi/fbm
+
 * Exact methods for simulating fractional Brownian motion (fBm) or fractional
   Gaussian noise (fGn) in python.
 * *Approximate* simulation of multifractional Brownian motion (mBm) or
