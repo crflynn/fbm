@@ -29,6 +29,10 @@ def hurst_bad(request):
 def hurst_good(request):
     return request.param
 
+@pytest.fixture(params=[[2, 0.5], [3, -0.5]])
+def adjust_rnd_good(request):
+    return request.param
+
 # Bad functions for Hurst in mBm
 def hb1(t):
     return -0.5 + t

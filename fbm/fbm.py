@@ -96,16 +96,21 @@ class FBM(object):
         """Sample the fractional Brownian motion."""
         return np.insert(self.fgn().cumsum(), [0], 0)
 
-    def fgn(self):
+    def fgn(self, adjust_rnd=None):
         """Sample the fractional Gaussian noise."""
         scale = (1.0 * self.length / self.n) ** self.hurst
-        gn = np.random.normal(0.0, 1.0, self.n)
+
+        if not adjust_rnd:
+            self.gn = np.random.normal(0.0, 1.0, self.n)
 
         # If hurst == 1/2 then just return Gaussian noise
         if self.hurst == 0.5:
-            return gn * scale
+            return self.gn * scale
         else:
-            fgn = self._fgn(gn)
+            if self._method == 'hosking':
+                fgn = self._fgn(self.gn, adjust_rnd)
+            else:
+                fgn = self._fgn(self.gn)
 
         # Scale to interval [0, L]
         return fgn * scale
@@ -217,7 +222,7 @@ class FBM(object):
         fgn = np.squeeze(np.asarray(fgn))
         return fgn
 
-    def _hosking(self, gn):
+    def _hosking(self, gn, adjust_rnd=None):
         """Generate a fGn realization using Hosking's method.
 
         Method of generation is Hosking's method (exact method) from his paper:
@@ -239,6 +244,13 @@ class FBM(object):
         v = 1
         phi[0] = 0
 
+        # Which fgn and to which is to be manually changed
+        # adjust_rnd should be in the form [step_num, value]
+        if adjust_rnd:
+            i_a, F = adjust_rnd
+        else:
+            i_a = self.n
+
         # Generate fgn realization with n increments of size 1
         for i in range(1, self.n):
             phi[i - 1] = self._cov[i]
@@ -251,6 +263,9 @@ class FBM(object):
             v *= (1 - phi[i - 1] * phi[i - 1])
             for j in range(i):
                 fgn[i] += phi[j] * fgn[i - j - 1]
+            if i == i_a:   # at this step we substitute the value we want
+                scale = (1.0 * self.length / self.n) ** self.hurst
+                self.gn[i] = (F / scale - fgn[i]) / np.sqrt(v)
             fgn[i] += np.sqrt(v) * gn[i]
 
         return fgn

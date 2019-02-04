@@ -86,6 +86,28 @@ For one-off samples of fBm or fGn there are separate functions available:
     # Get the times associated with the fBm
     t_values = times(n=1024, length=1)
 
+Sometimes you may need to adjust a number (or numbers) at a specified position
+within the fractional Guassian noise realization. E.g., your realization is
+[0.1, -2.1, 3.0, 4.1, ...], but you want to have at position 2, say, 3.5
+instead of 3.0, in the way that all the numbers before remain the same (they
+are already well-correlated), but the next ones, for sure, will have to change
+automatically. You can do it in a following fashion (note, that it will work
+only with Hosking method):
+
+.. code-block:: python
+
+    from fbm import FBM
+
+
+    # This will work only with Hosking method
+    f = FBM(n=1024, hurst=0.75, length=1, method='hosking')
+
+    # Generate a fGn realization
+    fgn_sample = f.fgn()
+
+    # Now we make the manual adjustment in the realization
+    fgn_sample_modified = f.fgn(adjust_rnd=[2, 3.5])
+
 For fastest performance use the Davies and Harte method. Note that the
 Davies and Harte method can fail if the Hurst parameter ``hurst`` is close to
 1 and there are a small amount of increments ``n``. If this occurs, a warning

@@ -43,6 +43,14 @@ def test_FBM_fgn(n_good, hurst_good, length_good, fbm_method_good):
     assert isinstance(fgn_sample, np.ndarray)
     assert len(fgn_sample) == n_good
 
+def test_FBM_fgn_adjust_rnd(n_good, hurst_good, length_good,
+                              fbm_method_good, adjust_rnd_good):
+    f = FBM(n_good, hurst_good, length_good, fbm_method_good)
+    fgn_sample = f.fgn()
+    fgn_sample = f.fgn(adjust_rnd_good)
+    assert isinstance(fgn_sample, np.ndarray)
+    assert len(fgn_sample) == n_good
+
 def test_FBM_times(n_good, hurst_good, length_good, fbm_method_good):
     f = FBM(n_good, hurst_good, length_good, fbm_method_good)
     ts = f.times()
