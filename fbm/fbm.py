@@ -15,9 +15,7 @@ class FBM(object):
 
     def __init__(self, n, hurst, length=1, method="daviesharte"):
         """Instantiate the FBM."""
-        self._methods = {"daviesharte": self._daviesharte,
-                         "cholesky": self._cholesky,
-                         "hosking": self._hosking}
+        self._methods = {"daviesharte": self._daviesharte, "cholesky": self._cholesky, "hosking": self._hosking}
         self.n = n
         self.hurst = hurst
         self.length = length
@@ -32,15 +30,31 @@ class FBM(object):
 
     def __str__(self):
         """Str method."""
-        return "fBm (" + str(self.method) + ") on [0, " + str(self.length) + \
-            "] with Hurst value " + str(self.hurst) + " and " + \
-            str(self.n) + " increments"
+        return (
+            "fBm ("
+            + str(self.method)
+            + ") on [0, "
+            + str(self.length)
+            + "] with Hurst value "
+            + str(self.hurst)
+            + " and "
+            + str(self.n)
+            + " increments"
+        )
 
     def __repr__(self):
         """Repr method."""
-        return "FBM(n=" + str(self.n) + ", hurst=" + str(self.hurst) + \
-            ", length=" + str(self.length) + ", method=\"" + \
-            str(self.method) + "\")"
+        return (
+            "FBM(n="
+            + str(self.n)
+            + ", hurst="
+            + str(self.hurst)
+            + ", length="
+            + str(self.length)
+            + ', method="'
+            + str(self.method)
+            + '")'
+        )
 
     @property
     def n(self):
@@ -86,8 +100,7 @@ class FBM(object):
     @method.setter
     def method(self, value):
         if value not in self._methods:
-            raise ValueError("Method must be 'daviesharte', 'hosking' or \
-                             'cholesky'.")
+            raise ValueError("Method must be 'daviesharte', 'hosking' or 'cholesky'.")
         self._method = value
         self._fgn = self._methods[self.method]
         self._changed = True
@@ -116,9 +129,7 @@ class FBM(object):
 
     def _autocovariance(self, k):
         """Autocovariance for fgn."""
-        return 0.5 * (abs(k - 1) ** (2 * self.hurst) -
-                      2 * abs(k) ** (2 * self.hurst) +
-                      abs(k + 1) ** (2 * self.hurst))
+        return 0.5 * (abs(k - 1) ** (2 * self.hurst) - 2 * abs(k) ** (2 * self.hurst) + abs(k + 1) ** (2 * self.hurst))
 
     def _daviesharte(self, gn):
         """Generate a fgn realization using Davies-Harte method.
@@ -139,8 +150,7 @@ class FBM(object):
             # Generate the first row of the circulant matrix
             row_component = [self._autocovariance(i) for i in range(1, self.n)]
             reverse_component = list(reversed(row_component))
-            row = [self._autocovariance(0)] + row_component + \
-                  [0] + reverse_component
+            row = [self._autocovariance(0)] + row_component + [0] + reverse_component
 
             # Get the eigenvalues of the circulant matrix
             # Discard the imaginary part (should all be zero in theory so
@@ -161,7 +171,8 @@ class FBM(object):
             warnings.warn(
                 "Combination of increments n and Hurst value H "
                 "invalid for Davies-Harte method. Reverting to Hosking method."
-                " Occurs when n is small and Hurst is close to 1. ")
+                " Occurs when n is small and Hurst is close to 1. "
+            )
             # Set method to hosking for future samples.
             self.method = "hosking"
             # Don"t need to store eigenvals anymore.
@@ -178,18 +189,16 @@ class FBM(object):
             if i == 0:
                 w[i] = np.sqrt(self._eigenvals[i] / (2 * self.n)) * gn[i]
             elif i < self.n:
-                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * \
-                    (gn[i] + 1j * gn2[i])
+                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * (gn[i] + 1j * gn2[i])
             elif i == self.n:
                 w[i] = np.sqrt(self._eigenvals[i] / (2 * self.n)) * gn2[0]
             else:
-                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * \
-                    (gn[2 * self.n - i] - 1j * gn2[2 * self.n - i])
+                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * (gn[2 * self.n - i] - 1j * gn2[2 * self.n - i])
 
         # Resulting z is fft of sequence w. Discard small imaginary part (z
         # should be real in theory).
         z = np.fft.fft(w)
-        fgn = z[:self.n].real
+        fgn = z[: self.n].real
         return fgn
 
     def _cholesky(self, gn):
@@ -203,7 +212,7 @@ class FBM(object):
         # Monte carlo consideration
         if self._C is None or self._changed:
             # Generate covariance matrix
-            G = np.matrix(np.zeros([self.n, self.n]))
+            G = np.zeros([self.n, self.n])
             for i in range(self.n):
                 for j in range(i + 1):
                     G[i, j] = self._autocovariance(i - j)
@@ -213,8 +222,8 @@ class FBM(object):
             self._changed = False
 
         # Generate fgn
-        fgn = self._C * np.matrix(gn).T
-        fgn = np.squeeze(np.asarray(fgn))
+        fgn = np.dot(self._C, np.array(gn).transpose())
+        fgn = np.squeeze(fgn)
         return fgn
 
     def _hosking(self, gn):
@@ -230,8 +239,7 @@ class FBM(object):
         psi = np.zeros(self.n)
         # Monte carlo consideration
         if self._cov is None or self._changed:
-            self._cov = np.array(
-                [self._autocovariance(i) for i in range(self.n)])
+            self._cov = np.array([self._autocovariance(i) for i in range(self.n)])
             self._changed = False
 
         # First increment from stationary distribution
@@ -248,7 +256,7 @@ class FBM(object):
             phi[i - 1] /= v
             for j in range(i - 1):
                 phi[j] = psi[j] - phi[i - 1] * psi[i - j - 2]
-            v *= (1 - phi[i - 1] * phi[i - 1])
+            v *= 1 - phi[i - 1] * phi[i - 1]
             for j in range(i):
                 fgn[i] += phi[j] * fgn[i - j - 1]
             fgn[i] += np.sqrt(v) * gn[i]
