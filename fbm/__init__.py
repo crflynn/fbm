@@ -16,12 +16,4 @@ from .mbm import MBM
 from .mbm import mbm
 from .mbm import mgn
 
-__all__ = [
-    "FBM",
-    "fbm",
-    "fgn",
-    "times",
-    "MBM",
-    "mbm",
-    "mgn",
-]
+__all__ = ["FBM", "fbm", "fgn", "times", "MBM", "mbm", "mgn"]

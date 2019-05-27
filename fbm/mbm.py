@@ -27,15 +27,31 @@ class MBM(object):
 
     def __str__(self):
         """Str method."""
-        return "mBm (" + str(self.method) + ") on [0, " + str(self.length) + \
-            "] with Hurst function " + self.hurst.__name__ + " and " + \
-            str(self.n) + " increments"
+        return (
+            "mBm ("
+            + str(self.method)
+            + ") on [0, "
+            + str(self.length)
+            + "] with Hurst function "
+            + self.hurst.__name__
+            + " and "
+            + str(self.n)
+            + " increments"
+        )
 
     def __repr__(self):
         """Repr method."""
-        return "MBM(n=" + str(self.n) + ", hurst=" + self.hurst.__name__ + \
-            ", length=" + str(self.length) + ", method=\"" + \
-            str(self.method) + "\")"
+        return (
+            "MBM(n="
+            + str(self.n)
+            + ", hurst="
+            + self.hurst.__name__
+            + ", length="
+            + str(self.length)
+            + ', method="'
+            + str(self.method)
+            + '")'
+        )
 
     @property
     def n(self):
@@ -57,13 +73,11 @@ class MBM(object):
     @hurst.setter
     def hurst(self, value):
         try:
-            num_args = len(inspect.getargspec(value).args)
+            num_args = len(inspect.signature(value).parameters)
         except Exception:
-            raise ValueError(
-                "Hurst parameter must be a function of one argument.")
+            raise ValueError("Hurst parameter must be a function of one argument.")
         if not callable(value) or num_args != 1:
-            raise ValueError(
-                "Hurst parameter must be a function of one argument.")
+            raise ValueError("Hurst parameter must be a function of one argument.")
         self._check_hurst(value)
         self._hurst = value
         self._changed = True
@@ -117,9 +131,9 @@ class MBM(object):
             self._changed = False
         mbm = [0]
         coefs = [(g / np.sqrt(self._dt)) * self._dt for g in gn]
-        for k in range(1, self.n+1):
-            weights = [self._w(t, self._hs[k]) for t in self._ts[1:k+1]]
-            seq = [coefs[i-1] * weights[k - i] for i in range(1, k+1)]
+        for k in range(1, self.n + 1):
+            weights = [self._w(t, self._hs[k]) for t in self._ts[1 : k + 1]]
+            seq = [coefs[i - 1] * weights[k - i] for i in range(1, k + 1)]
             mbm.append(sum(seq))
         return np.array(mbm)
 
@@ -129,9 +143,11 @@ class MBM(object):
 
     def _w(self, t, hurst):
         """Get the Riemann-Liouville method weight for time t."""
-        w = 1.0 / gamma(hurst + 0.5) * \
-            np.sqrt((t ** (2 * hurst) -
-                    (t - self._dt) ** (2 * hurst)) / (2 * hurst * self._dt))
+        w = (
+            1.0
+            / gamma(hurst + 0.5)
+            * np.sqrt((t ** (2 * hurst) - (t - self._dt) ** (2 * hurst)) / (2 * hurst * self._dt))
+        )
         return w
 
 
