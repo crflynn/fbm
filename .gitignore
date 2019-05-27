@@ -24,3 +24,9 @@ build/
 
 # macosx
 .DS_Store
+
+# intellij
+.idea/
+
+# pyenv
+.python-version
