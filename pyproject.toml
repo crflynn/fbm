@@ -19,7 +19,7 @@ exclude = '''
 
 [tool.poetry]
 name = "fbm"
-version = "0.2.0"
+version = "0.3.0"
 description = ""
 authors = ["Flynn <crf204@gmail.com>"]
 

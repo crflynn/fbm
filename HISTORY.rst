@@ -1,3 +1,14 @@
+0.3.0: 2019-05-27
+~~~~~~~~~~~~~~~~~
+
+* Drop support for Python 2
+
+* Remove usage of numpy matrix objects (to be deprecated in numpy)
+
+* Replace pipenv with poetry for dependency management.
+
+* Implement black code formatting
+
 0.2.0: 2018-02-27
 ~~~~~~~~~~~~~~~~~
 
