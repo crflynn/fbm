@@ -1,6 +1,8 @@
 fbm
 ===
 
+**Support of this package has been discontinued in favor of the more robust** `stochastic <https://github.com/crflynn/stochastic>`__ **package, which includes fractional Brownian motion and multifractional Brownian motion implementations among many other stochastic processes for simulation.**
+
 |travis| |codecov| |pypi| |pyversions|
 
 .. |travis| image:: https://img.shields.io/travis/crflynn/fbm.svg
