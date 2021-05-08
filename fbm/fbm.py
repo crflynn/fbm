@@ -148,9 +148,10 @@ class FBM(object):
         # Monte carlo consideration
         if self._eigenvals is None or self._changed:
             # Generate the first row of the circulant matrix
-            row_component = [self._autocovariance(i) for i in range(1, self.n)]
-            reverse_component = list(reversed(row_component))
-            row = [self._autocovariance(0)] + row_component + [0] + reverse_component
+            row_component = self._autocovariance(np.arange(1, self.n))
+            reverse_component = np.flip(row_component)
+            z = np.array([0])
+            row = np.concatenate((self._autocovariance(z), row_component, z, reverse_component))
 
             # Get the eigenvalues of the circulant matrix
             # Discard the imaginary part (should all be zero in theory so
@@ -167,7 +168,7 @@ class FBM(object):
         # Wood, Andrew TA, and Grace Chan. "Simulation of stationary Gaussian
         #     processes in [0, 1] d." Journal of computational and graphical
         #     statistics 3, no. 4 (1994): 409-432.
-        if np.any([ev < 0 for ev in self._eigenvals]):
+        if np.any(self._eigenvals<0):
             warnings.warn(
                 "Combination of increments n and Hurst value H "
                 "invalid for Davies-Harte method. Reverting to Hosking method."
@@ -183,18 +184,13 @@ class FBM(object):
         gn2 = np.random.normal(0.0, 1.0, self.n)
 
         # Resulting sequence from matrix multiplication of positive definite
-        # sqrt(C) matrix with fgn sample can be simulated in this way.
+        # sqrt(C) matrix with fgn sample can be simulated in this way.       
         w = np.zeros(2 * self.n, dtype=complex)
-        for i in range(2 * self.n):
-            if i == 0:
-                w[i] = np.sqrt(self._eigenvals[i] / (2 * self.n)) * gn[i]
-            elif i < self.n:
-                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * (gn[i] + 1j * gn2[i])
-            elif i == self.n:
-                w[i] = np.sqrt(self._eigenvals[i] / (2 * self.n)) * gn2[0]
-            else:
-                w[i] = np.sqrt(self._eigenvals[i] / (4 * self.n)) * (gn[2 * self.n - i] - 1j * gn2[2 * self.n - i])
-
+        w[0] = np.sqrt(self._eigenvals[0] / (2 * self.n)) * gn[0]
+        w[1:self.n] = np.sqrt(self._eigenvals[1:self.n] / (4 * self.n)) * (gn[1:self.n] + 1j * gn2[1:self.n])
+        w[self.n] = np.sqrt(self._eigenvals[self.n] / (2 * self.n)) * gn2[0]
+        w[self.n+1:] = np.sqrt(self._eigenvals[self.n+1:] / (4 * self.n)) * np.flip(gn[1:self.n] - 1j * gn2[1:self.n])
+        
         # Resulting z is fft of sequence w. Discard small imaginary part (z
         # should be real in theory).
         z = np.fft.fft(w)
